@@ -124,6 +124,8 @@ const LaunchPage: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [departTime, setDepartTime] = useState<string | null>(null);
+  const [returnTime, setReturnTime] = useState<string | null>(null);
   const [greeting, setGreeting] = useState("");
   const [activeJourney, setActiveJourney] = useState<ActiveJourney | null>(null);
   const [journeyProgress, setJourneyProgress] = useState({ visited: 0, total: 0, percentage: 0 });
@@ -284,19 +286,76 @@ const LaunchPage: React.FC = () => {
           </div>
         )}
 
+        {/* Time Selection */}
+        {selectedProvince && selectedDuration && (!departTime || !returnTime) && (
+          <div className="mb-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">เลือกเวลาเดินทาง</h3>
+              <button
+                className="text-xs text-gray-400 underline"
+                onClick={() => { setSelectedDuration(null); setDepartTime(null); setReturnTime(null); }}
+              >
+                เปลี่ยนจำนวนวัน
+              </button>
+            </div>
+            <div className="mb-4">
+              <p className={`text-sm font-semibold mb-2 flex items-center gap-1 ${departTime ? "text-pink-600" : "text-gray-600"}`}>
+                🛫 เวลาออกเดินทาง {departTime && <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full">{departTime} ✓</span>}
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {["06:00","07:00","08:00","09:00","10:00","11:00","12:00","13:00"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setDepartTime(t)}
+                    className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95 ${
+                      departTime === t
+                        ? "bg-pink-500 text-white border-pink-500 shadow-sm"
+                        : "bg-white text-gray-600 border-gray-100 hover:border-pink-300"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className={`text-sm font-semibold mb-2 flex items-center gap-1 ${returnTime ? "text-pink-600" : "text-gray-600"}`}>
+                🛬 เวลากลับ {returnTime && <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full">{returnTime} ✓</span>}
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {["15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setReturnTime(t)}
+                    className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all active:scale-95 ${
+                      returnTime === t
+                        ? "bg-pink-500 text-white border-pink-500 shadow-sm"
+                        : "bg-white text-gray-600 border-gray-100 hover:border-pink-300"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Categories Section - เที่ยว พัก กิน */}
-        {selectedProvince && selectedDuration && (
+        {selectedProvince && selectedDuration && departTime && returnTime && (
           <div className="mb-6 animate-slide-up">
             <div className="flex flex-col mb-2">
               <div className="flex justify-between items-center text-sm font-medium text-gray-600 mb-2 px-2">
                 <span>
-                  แผน: {selectedProvince} ({selectedDuration} วัน)
+                  {selectedProvince} · {selectedDuration} วัน · {departTime}–{returnTime}
                 </span>
                 <button
                   className="text-xs underline"
                   onClick={() => {
                     setSelectedProvince(null);
                     setSelectedDuration(null);
+                    setDepartTime(null);
+                    setReturnTime(null);
                   }}
                 >
                   เริ่มใหม่
@@ -311,6 +370,8 @@ const LaunchPage: React.FC = () => {
                       city: selectedProvince,
                       duration: selectedDuration,
                       category: "Attraction",
+                      departTime,
+                      returnTime,
                     },
                   })
                 }
@@ -325,6 +386,8 @@ const LaunchPage: React.FC = () => {
                       city: selectedProvince,
                       duration: selectedDuration,
                       category: "Hotel",
+                      departTime,
+                      returnTime,
                     },
                   })
                 }
@@ -339,6 +402,8 @@ const LaunchPage: React.FC = () => {
                       city: selectedProvince,
                       duration: selectedDuration,
                       category: "Restaurant",
+                      departTime,
+                      returnTime,
                     },
                   })
                 }

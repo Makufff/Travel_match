@@ -8,6 +8,74 @@ import { mockApi } from "../services/mockApi";
 import { getUserId, getUserStorageKey } from "../hooks/useUser";
 import type { TravelPlace } from "../types/TravelPlace";
 
+type MockMessage = { id: number; sender: string; text: string; time: string; isMe: boolean };
+
+const MOCK_TRIP_GROUPS = [
+  {
+    id: 1,
+    name: "เที่ยวเชียงใหม่ฤดูหนาว 🏔️",
+    destination: "เชียงใหม่",
+    members: 4,
+    maxMembers: 6,
+    dates: "15–17 ธ.ค.",
+    tags: ["ธรรมชาติ", "คาเฟ่"],
+    color: "from-green-400 to-teal-500",
+    emoji: "🏔️",
+    match: 94,
+    preview: "ใครอยากไปดอยอินทนนท์ช่วงเช้าบ้าง?",
+    unread: 3,
+    messages: [
+      { id: 1, sender: "น้องมิ้น", text: "สวัสดีทุกคนนนน 🙌", time: "09:00", isMe: false },
+      { id: 2, sender: "พี่เอก", text: "สวัสดีครับ ตื่นเต้นมากเลย!", time: "09:02", isMe: false },
+      { id: 3, sender: "Me", text: "สวัสดีครับทุกคน รอไม่ไหวแล้ว 😄", time: "09:05", isMe: true },
+      { id: 4, sender: "น้องมิ้น", text: "ใครอยากไปดอยอินทนนท์ช่วงเช้าบ้าง?", time: "09:10", isMe: false },
+      { id: 5, sender: "พี่เอก", text: "ผมไป! ออกกี่โมงดีครับ?", time: "09:11", isMe: false },
+      { id: 6, sender: "Me", text: "ออก 7 โมงเช้าได้เลยครับ", time: "09:13", isMe: true },
+      { id: 7, sender: "น้องฝน", text: "โอเคเลย! แล้วเจอกันที่จุดนัดพบ 🗺️", time: "09:15", isMe: false },
+    ] as MockMessage[],
+  },
+  {
+    id: 2,
+    name: "Night Market Chiangmai 🌮",
+    destination: "เชียงใหม่",
+    members: 3,
+    maxMembers: 5,
+    dates: "22–23 ธ.ค.",
+    tags: ["ตลาด", "อาหาร"],
+    color: "from-orange-400 to-rose-500",
+    emoji: "🌮",
+    match: 87,
+    preview: "เจอกันที่ประตูท่าแพ 18:00 น.",
+    unread: 0,
+    messages: [
+      { id: 1, sender: "นัท", text: "กลุ่มนี้ไปตลาดกลางคืนกัน!", time: "14:00", isMe: false },
+      { id: 2, sender: "Me", text: "ดีมากเลย ชอบ Street Food มาก 😋", time: "14:02", isMe: true },
+      { id: 3, sender: "นัท", text: "เจอกันที่ประตูท่าแพ 18:00 น.", time: "14:05", isMe: false },
+    ] as MockMessage[],
+  },
+  {
+    id: 3,
+    name: "Solo Travelers Club 🛕",
+    destination: "เชียงใหม่",
+    members: 8,
+    maxMembers: 15,
+    dates: "ทุกสุดสัปดาห์",
+    tags: ["วัด", "ชิลล์"],
+    color: "from-purple-400 to-indigo-500",
+    emoji: "🛕",
+    match: 81,
+    preview: "วันนี้ไปวัดพระธาตุดอยสุเทพกัน",
+    unread: 5,
+    messages: [
+      { id: 1, sender: "แอดมิน", text: "ยินดีต้อนรับสมาชิกใหม่ทุกคน! 🎉", time: "08:00", isMe: false },
+      { id: 2, sender: "โบ", text: "สวัสดีทุกคน มาใหม่ค่ะ", time: "08:30", isMe: false },
+      { id: 3, sender: "Me", text: "สวัสดีครับ ยินดีที่ได้รู้จัก 😊", time: "08:32", isMe: true },
+      { id: 4, sender: "แอดมิน", text: "วันนี้ไปวัดพระธาตุดอยสุเทพกัน", time: "09:00", isMe: false },
+      { id: 5, sender: "โบ", text: "ไปด้วยค่ะ!!! 🙌", time: "09:01", isMe: false },
+    ] as MockMessage[],
+  },
+];
+
 const TinderPage: React.FC = () => {
   const [places, setPlaces] = useState<TravelPlace[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -22,6 +90,8 @@ const TinderPage: React.FC = () => {
   );
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [pendingSwipe, setPendingSwipe] = useState<"left" | "right" | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
+  const [chatInput, setChatInput] = useState("");
 
   const userId = getUserId();
   const navigate = useNavigate();
@@ -326,82 +396,200 @@ const TinderPage: React.FC = () => {
     }
   };
 
-  // Finished state
+  // Finished state - Chat view
+  if (isFinished && selectedGroup !== null) {
+    const group = MOCK_TRIP_GROUPS.find((g) => g.id === selectedGroup)!;
+    return (
+      <Layout hideNavbar backgroundVariant="none">
+        <div className="min-h-screen bg-[#f0f0f0] flex flex-col">
+          {/* Chat Header */}
+          <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-3 flex items-center gap-3 sticky top-0 z-10 shadow-sm">
+            <button
+              onClick={() => setSelectedGroup(null)}
+              className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center active:scale-95 transition-all flex-shrink-0"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${group.color} flex items-center justify-center shadow-sm flex-shrink-0`}>
+              <span className="text-xl">{group.emoji}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-gray-900 text-[15px] truncate">{group.name}</p>
+              <p className="text-xs text-gray-400">{group.members} สมาชิก · {group.dates}</p>
+            </div>
+            <button className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+            {group.messages.map((msg) => (
+              <div key={msg.id} className={`flex items-end gap-2 ${msg.isMe ? "justify-end" : "justify-start"}`}>
+                {!msg.isMe && (
+                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${group.color} flex items-center justify-center text-xs font-bold text-white flex-shrink-0`}>
+                    {msg.sender[0]}
+                  </div>
+                )}
+                <div className="max-w-[72%]">
+                  {!msg.isMe && (
+                    <p className="text-xs text-gray-400 mb-1 ml-1 font-medium">{msg.sender}</p>
+                  )}
+                  <div className={`px-4 py-2.5 rounded-2xl ${
+                    msg.isMe
+                      ? "bg-pink-500 text-white rounded-br-sm"
+                      : "bg-white text-gray-800 rounded-bl-sm shadow-sm"
+                  }`}>
+                    <p className="text-sm leading-relaxed">{msg.text}</p>
+                  </div>
+                  <p className={`text-[11px] text-gray-400 mt-1 ${msg.isMe ? "text-right" : "text-left ml-1"}`}>
+                    {msg.time}{msg.isMe && " ✓"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Chat Input */}
+          <div className="bg-white border-t border-gray-200 px-3 py-3 flex items-center gap-2">
+            <button className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 active:scale-95">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="พิมพ์ข้อความ..."
+              className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm text-gray-800 outline-none placeholder-gray-400"
+            />
+            <button
+              onClick={() => setChatInput("")}
+              className="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all flex-shrink-0"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Finished state - Group list view
   if (isFinished) {
     return (
-      <Layout
-        showHeader
-        headerTitle="เสร็จสิ้น!"
-        showCoinCounter
-        backgroundVariant="tinder"
-      >
-        <div className="min-h-[80vh] flex flex-col items-center justify-center p-6">
-          <div className="text-center space-y-6 max-w-md">
-            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-pink-400 to-rose-500 rounded-3xl flex items-center justify-center shadow-lg animate-bounce-slow">
-              <span className="text-white font-bold text-xl">Success!</span>
-            </div>
+      <Layout hideNavbar backgroundVariant="none">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          {/* Header */}
+          <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-4 flex items-center justify-between sticky top-0 z-10">
+            <button
+              onClick={() => navigate("/")}
+              className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center active:scale-95 transition-all"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="font-bold text-gray-900 text-lg">เพื่อนร่วมทริป</h1>
+            <button
+              onClick={() => navigate("/gallery")}
+              className="text-sm text-pink-600 font-semibold active:scale-95 transition-all"
+            >
+              บันทึก ({likedPlaces.length})
+            </button>
+          </div>
 
-            <h2 className="text-2xl font-bold text-gray-800">
-              คุณดูครบหมดแล้ว!
-            </h2>
-
-            <p className="text-gray-600">
-              {selectedCities.length > 0
-                ? `สำรวจสถานที่ใน${selectedCities.join(" & ")}ครบแล้ว!`
-                : "สำรวจสถานที่ทั้งหมดครบแล้ว!"}
-            </p>
-
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-center space-x-2">
-                <span className="text-3xl font-bold text-pink-600">
-                  {likedPlaces.length}
-                </span>
+          {/* Match Banner */}
+          <div className="mx-4 mt-4 mb-3 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-4 text-white shadow-lg shadow-pink-200/50">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
+                🎉
               </div>
-              <div className="text-sm text-gray-500 mt-1">สถานที่ที่บันทึก</div>
+              <div>
+                <p className="font-bold text-lg">ค้นพบ {MOCK_TRIP_GROUPS.length} กลุ่มที่เข้ากับคุณ!</p>
+                <p className="text-white/80 text-sm">
+                  จาก {likedPlaces.length} สถานที่ที่คุณบันทึกไว้
+                </p>
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-3 w-full">
-              <button
-                onClick={() => navigate("/routing")}
-                className="flex items-center justify-center w-full bg-gradient-to-r from-pink-600 to-pink-500 text-white py-4 px-6 rounded-2xl font-bold text-lg shadow-lg shadow-pink-500/30 active:scale-95 transition-all outline outline-offset-2 outline-2 outline-pink-500 animate-pulse-slow"
-              >
-                สรุปแผนการท่องเที่ยว
-              </button>
+          {/* Group List */}
+          <div className="flex-1 overflow-y-auto px-4">
+            <p className="py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">
+              กลุ่มที่ match กับคุณ
+            </p>
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+              {MOCK_TRIP_GROUPS.map((group, idx) => (
+                <button
+                  key={group.id}
+                  onClick={() => setSelectedGroup(group.id)}
+                  className={`w-full px-4 py-4 flex items-center gap-3 active:bg-gray-50 transition-colors text-left ${
+                    idx < MOCK_TRIP_GROUPS.length - 1 ? "border-b border-gray-100" : ""
+                  }`}
+                >
+                  {/* Avatar */}
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${group.color} flex items-center justify-center flex-shrink-0 shadow-md`}>
+                    <span className="text-2xl">{group.emoji}</span>
+                  </div>
 
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className="flex items-center justify-center w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white py-3.5 px-6 rounded-xl font-semibold shadow-md active:scale-95 transition-all mt-4"
-              >
-                เลือกปัดหมวดหมู่อื่นต่อ
-              </button>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <p className="font-bold text-gray-900 text-[15px] truncate">{group.name}</p>
+                      <span className="text-xs font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                        {group.match}%
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1 mb-1">
+                      <span className="text-xs text-gray-400">{group.members}/{group.maxMembers} คน</span>
+                      <span className="text-gray-300 text-xs">·</span>
+                      <span className="text-xs text-gray-400">{group.dates}</span>
+                      {group.tags.map((tag) => (
+                        <span key={tag} className="text-[11px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-400 truncate">{group.preview}</p>
+                      {group.unread > 0 && (
+                        <span className="ml-2 min-w-[20px] h-5 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center px-1 font-bold flex-shrink-0">
+                          {group.unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-              <button
-                onClick={() => setShowCityModal(true)}
-                className="flex items-center justify-center w-full bg-white text-pink-600 border border-pink-100 py-3.5 px-6 rounded-xl font-semibold shadow-sm active:scale-95 transition-all"
-              >
-                สำรวจเมืองอื่น
-              </button>
-
-              <button
-                onClick={() => navigate("/gallery")}
-                className="flex items-center justify-center w-full bg-white text-pink-600 border border-pink-100 py-3.5 px-6 rounded-xl font-semibold shadow-sm active:scale-95 transition-all"
-              >
-                ดูที่บันทึกของฉัน
-              </button>
-
-              <button
-                onClick={handleResetDestinations}
-                className="flex items-center justify-center w-full bg-gray-50 text-gray-500 border border-gray-100 py-3.5 px-6 rounded-xl font-medium shadow-sm active:scale-95 transition-all"
-              >
-                รีเซ็ต & ปัดหมวด{" "}
-                {selectedCategory === "Attraction"
-                  ? "ที่เที่ยว"
-                  : selectedCategory === "Restaurant"
-                    ? "ร้านอาหาร"
-                    : "ที่พัก"}{" "}
-                ใหม่
-              </button>
+                  <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ))}
             </div>
+          </div>
+
+          {/* Bottom Actions */}
+          <div className="bg-white border-t border-gray-100 p-4 space-y-2">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold shadow-md active:scale-95 transition-all"
+            >
+              ปัดหมวดหมู่อื่นต่อ
+            </button>
+            <button
+              onClick={handleResetDestinations}
+              className="w-full py-3 rounded-xl border border-gray-200 text-gray-400 font-medium active:scale-95 transition-all text-sm"
+            >
+              เริ่มต้นใหม่
+            </button>
           </div>
         </div>
       </Layout>
