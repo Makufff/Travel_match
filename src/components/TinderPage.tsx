@@ -241,7 +241,7 @@ const TinderPage: React.FC = () => {
   };
 
   const remainingPlaces = places.slice(currentIndex, currentIndex + 2);
-  const isFinished = !loading && currentIndex >= places.length;
+  const isFinished = !loading && places.length > 0 && currentIndex >= places.length;
 
   if (!selectedCategory && !showCityModal) {
     return (
@@ -395,6 +395,46 @@ const TinderPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // No places available (all previously swiped)
+  if (!loading && selectedCategory && places.length === 0 && !error) {
+    return (
+      <Layout hideNavbar backgroundVariant="none">
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+          <div className="text-center max-w-sm">
+            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-pink-100 to-rose-100 rounded-3xl flex items-center justify-center mb-5">
+              <span className="text-4xl">🗺️</span>
+            </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">ปัดครบทุกที่แล้ว!</h2>
+            <p className="text-gray-500 text-sm mb-8">
+              คุณเคยสำรวจสถานที่ในหมวดนี้ครบแล้ว
+              ลองรีเซ็ตเพื่อเริ่มใหม่ หรือเลือกหมวดอื่น
+            </p>
+            <div className="space-y-3 w-full">
+              <button
+                onClick={handleResetDestinations}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold shadow-md active:scale-95 transition-all"
+              >
+                รีเซ็ตและเริ่มปัดใหม่
+              </button>
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className="w-full py-3 rounded-xl border border-gray-200 text-gray-600 font-medium active:scale-95 transition-all"
+              >
+                เลือกหมวดหมู่อื่น
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="w-full py-3 rounded-xl border border-gray-200 text-gray-400 font-medium active:scale-95 transition-all text-sm"
+              >
+                กลับหน้าหลัก
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   // Finished state - Chat view
   if (isFinished && selectedGroup !== null) {
